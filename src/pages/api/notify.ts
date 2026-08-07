@@ -54,22 +54,29 @@ export const POST: APIRoute = async ({ request }) => {
     })
   }
 
+  const audienceId = import.meta.env.RESEND_AUDIENCE_ID
   const resend = new Resend(key)
 
   try {
-    await resend.emails.send({
-      from: 'lolla8 <hello@lolla8.com>',
-      to: email,
-      subject: 'Você está na lista ✦',
-      html: userEmailHtml(email),
-    })
-
-    await resend.emails.send({
-      from: 'lolla8 <hello@lolla8.com>',
-      to: 'carinecontato@gmail.com',
-      subject: `Novo cadastro: ${escapeHtml(email)}`,
-      html: `<p style="font-family:sans-serif;">Novo e-mail cadastrado na lista de espera:<br><strong>${escapeHtml(email)}</strong></p>`,
-    })
+    await Promise.all([
+      resend.contacts.create({
+        audienceId: audienceId ?? '',
+        email,
+        unsubscribed: false,
+      }),
+      resend.emails.send({
+        from: 'lolla8 <hello@lolla8.com>',
+        to: email,
+        subject: 'Você está na lista ✦',
+        html: userEmailHtml(email),
+      }),
+      resend.emails.send({
+        from: 'lolla8 <hello@lolla8.com>',
+        to: 'carinecontato@gmail.com',
+        subject: `Novo cadastro: ${escapeHtml(email)}`,
+        html: `<p style="font-family:sans-serif;">Novo e-mail cadastrado na lista de espera:<br><strong>${escapeHtml(email)}</strong></p>`,
+      }),
+    ])
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
