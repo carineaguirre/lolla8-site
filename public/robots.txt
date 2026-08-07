@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://lolla8.com/sitemap-index.xml
