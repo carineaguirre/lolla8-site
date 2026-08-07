@@ -57,24 +57,25 @@ export const POST: APIRoute = async ({ request }) => {
   const audienceId = import.meta.env.RESEND_AUDIENCE_ID
   const resend = new Resend(key)
 
-  try {
-    // Emails are the critical path — run them first
-    await Promise.all([
-      resend.emails.send({
-        from: 'lolla8 <hello@lolla8.com>',
-        to: email,
-        subject: 'Você está na lista ✦',
-        html: userEmailHtml(email),
-      }),
-      resend.emails.send({
-        from: 'lolla8 <hello@lolla8.com>',
-        to: 'carinecontato@gmail.com',
-        subject: `Novo cadastro: ${escapeHtml(email)}`,
-        html: `<p style="font-family:sans-serif;">Novo e-mail cadastrado na lista de espera:<br><strong>${escapeHtml(email)}</strong></p>`,
-      }),
-    ])
-  } catch {
-    return new Response(JSON.stringify({ error: 'Erro ao enviar. Tente novamente.' }), {
+  // Resend SDK returns { data, error } — it never throws, so we must check the error field
+  const [r1, r2] = await Promise.all([
+    resend.emails.send({
+      from: 'lolla8 <hello@lolla8.com>',
+      to: email,
+      subject: 'Você está na lista ✦',
+      html: userEmailHtml(email),
+    }),
+    resend.emails.send({
+      from: 'lolla8 <hello@lolla8.com>',
+      to: 'carinecontato@gmail.com',
+      subject: `Novo cadastro: ${escapeHtml(email)}`,
+      html: `<p style="font-family:sans-serif;">Novo e-mail cadastrado na lista de espera:<br><strong>${escapeHtml(email)}</strong></p>`,
+    }),
+  ])
+
+  if (r1.error || r2.error) {
+    const msg = r1.error?.message ?? r2.error?.message ?? 'Erro ao enviar.'
+    return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
