@@ -1,6 +1,9 @@
 ---
+export const prerender = true
+
 import Layout from '@/layouts/Layout.astro'
 import AnimatedText from '@/components/AnimatedText.astro'
+import ConfirmationModal from '@/components/ConfirmationModal.astro'
 ---
 
 <Layout>
@@ -24,7 +27,7 @@ import AnimatedText from '@/components/AnimatedText.astro'
         Gerencie seu ateliê, clientes e pedidos —<br />tudo em um só lugar.
       </p>
 
-      <form class="notify-form" action="#" method="post" novalidate>
+      <form class="notify-form" id="notify-form" novalidate>
         <label for="email" class="visually-hidden">Seu e-mail</label>
         <input
           id="email"
@@ -33,9 +36,11 @@ import AnimatedText from '@/components/AnimatedText.astro'
           placeholder="seu@email.com"
           autocomplete="email"
           required
+          aria-describedby="form-error"
         />
-        <button type="submit">Avise-me</button>
+        <button type="submit" id="notify-btn">Avise-me</button>
       </form>
+      <p class="form-error" id="form-error" role="alert" aria-live="polite"></p>
 
       <p class="disclaimer">Sem spam. Só quando estiver pronto.</p>
     </section>
@@ -44,7 +49,101 @@ import AnimatedText from '@/components/AnimatedText.astro'
       <span>© 2026 lolla8</span>
     </footer>
   </main>
+
+  <ConfirmationModal />
 </Layout>
+
+<script>
+  const form = document.getElementById('notify-form') as HTMLFormElement
+  const input = document.getElementById('email') as HTMLInputElement
+  const btn = document.getElementById('notify-btn') as HTMLButtonElement
+  const errorEl = document.getElementById('form-error') as HTMLParagraphElement
+  const modal = document.getElementById('confirm-modal') as HTMLElement
+  const modalClose = document.getElementById('modal-close') as HTMLButtonElement
+  const backdrop = document.getElementById('modal-backdrop') as HTMLElement
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  function showError(msg: string) {
+    errorEl.textContent = msg
+    errorEl.classList.add('visible')
+    input.setAttribute('aria-invalid', 'true')
+  }
+
+  function clearError() {
+    errorEl.textContent = ''
+    errorEl.classList.remove('visible')
+    input.removeAttribute('aria-invalid')
+  }
+
+  function openModal() {
+    // Reset animations so they replay on each open
+    const animated = modal.querySelectorAll<HTMLElement>(
+      '.ring-draw, .check-draw, .glow, .modal-title, .modal-body, .modal-tagline'
+    )
+    animated.forEach(el => { el.style.animationName = 'none' })
+    modal.offsetHeight // force reflow
+    animated.forEach(el => { el.style.animationName = '' })
+
+    modal.classList.add('open')
+    modalClose.focus()
+  }
+
+  function closeModal() {
+    modal.classList.remove('open')
+    input.value = ''
+    clearError()
+    input.focus()
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    clearError()
+
+    const email = input.value.trim()
+
+    if (!EMAIL_RE.test(email)) {
+      showError('Por favor, insira um e-mail válido.')
+      input.focus()
+      return
+    }
+
+    btn.disabled = true
+    btn.textContent = 'Enviando…'
+
+    try {
+      const res = await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        openModal()
+      } else {
+        showError(data.error || 'Algo deu errado. Tente novamente.')
+      }
+    } catch {
+      showError('Sem conexão. Verifique e tente novamente.')
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Avise-me'
+    }
+  })
+
+  input.addEventListener('input', () => {
+    if (errorEl.classList.contains('visible')) clearError()
+  })
+
+  modalClose.addEventListener('click', closeModal)
+  backdrop.addEventListener('click', closeModal)
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal()
+  })
+</script>
 
 <style is:global>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -72,6 +171,17 @@ import AnimatedText from '@/components/AnimatedText.astro'
     }
   }
 
+  :root[data-theme="light"] {
+    --bg: #faf9f7; --surface: #f2ede6; --border: rgba(0,0,0,0.07);
+    --text: #1a1714; --muted: rgba(26,23,20,0.5);
+    --accent: #b8852a; --accent-dim: rgba(184,133,42,0.12);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d0d0d; --surface: #161616; --border: rgba(255,255,255,0.07);
+    --text: #f0ece4; --muted: rgba(240,236,228,0.45);
+    --accent: #d4a259; --accent-dim: rgba(212,162,89,0.15);
+  }
+
   html, body { height: 100%; }
 
   body {
@@ -92,7 +202,6 @@ import AnimatedText from '@/components/AnimatedText.astro'
     overflow: hidden;
   }
 
-  /* subtle dot grid background */
   .grid-bg {
     position: absolute;
     inset: 0;
@@ -102,7 +211,6 @@ import AnimatedText from '@/components/AnimatedText.astro'
     z-index: 0;
   }
 
-  /* radial fade over grid near center */
   .grid-bg::after {
     content: '';
     position: absolute;
@@ -110,7 +218,6 @@ import AnimatedText from '@/components/AnimatedText.astro'
     background: radial-gradient(ellipse 70% 60% at 50% 50%, transparent 30%, var(--bg) 100%);
   }
 
-  /* top bar */
   .top-bar {
     position: relative;
     z-index: 1;
@@ -126,7 +233,6 @@ import AnimatedText from '@/components/AnimatedText.astro'
     color: var(--text);
   }
 
-  /* hero */
   .hero {
     position: relative;
     z-index: 1;
@@ -173,7 +279,6 @@ import AnimatedText from '@/components/AnimatedText.astro'
     animation: fade-in 0.7s ease 0.8s forwards;
   }
 
-  /* notify form */
   .notify-form {
     display: flex;
     gap: 0.5rem;
@@ -198,13 +303,11 @@ import AnimatedText from '@/components/AnimatedText.astro'
     transition: border-color 0.2s;
   }
 
-  .notify-form input::placeholder {
-    color: var(--muted);
-  }
+  .notify-form input::placeholder { color: var(--muted); }
 
-  .notify-form input:focus {
-    border-color: var(--accent);
-  }
+  .notify-form input:focus { border-color: var(--accent); }
+
+  .notify-form input[aria-invalid="true"] { border-color: #c4703a; }
 
   .notify-form button {
     height: 2.75rem;
@@ -221,8 +324,24 @@ import AnimatedText from '@/components/AnimatedText.astro'
     white-space: nowrap;
   }
 
-  .notify-form button:hover {
-    opacity: 0.85;
+  .notify-form button:hover { opacity: 0.85; }
+  .notify-form button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  /* Inline error */
+  .form-error {
+    font-size: 0.78rem;
+    color: #c4703a;
+    min-height: 1.2em;
+    margin-top: -0.5rem;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+
+  .form-error.visible {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .disclaimer {
@@ -232,7 +351,6 @@ import AnimatedText from '@/components/AnimatedText.astro'
     animation: fade-in 0.7s ease 1.1s forwards;
   }
 
-  /* bottom bar */
   .bottom-bar {
     position: relative;
     z-index: 1;
@@ -244,17 +362,13 @@ import AnimatedText from '@/components/AnimatedText.astro'
 
   .visually-hidden {
     position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
   }
 
-  @keyframes fade-in {
-    to { opacity: 1; }
-  }
+  @keyframes fade-in { to { opacity: 1; } }
 </style>

@@ -1,0 +1,219 @@
+---
+---
+<!-- Circle circumference: 2π×54 ≈ 339.3 · Check path length ≈ 62 -->
+<div id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="modal-heading" class="modal">
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+
+  <div class="modal-box">
+    <button class="close-btn" id="modal-close" aria-label="Fechar">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <div class="anim-wrap" aria-hidden="true">
+      <svg class="ring-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle class="ring-track" cx="60" cy="60" r="54" stroke-width="1.5"/>
+        <circle class="ring-draw" cx="60" cy="60" r="54" stroke-width="1.5" stroke-linecap="round"
+          transform="rotate(-90 60 60)"/>
+        <path class="check-draw" d="M37 61 L51 75 L83 43"
+          stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+      </svg>
+      <div class="glow" aria-hidden="true"></div>
+    </div>
+
+    <h2 id="modal-heading" class="modal-title">Você está na lista.</h2>
+    <p class="modal-body">
+      Quando o lolla8 estiver pronto,<br/>você será um dos primeiros a saber.
+    </p>
+    <p class="modal-tagline">Feito com cuidado, para quem faz com as mãos.</p>
+  </div>
+</div>
+
+<style>
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .modal.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(13, 13, 13, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  @media (prefers-color-scheme: light) {
+    .modal-backdrop {
+      background: rgba(250, 249, 247, 0.92);
+    }
+  }
+
+  :root[data-theme="light"] .modal-backdrop { background: rgba(250, 249, 247, 0.92); }
+  :root[data-theme="dark"]  .modal-backdrop { background: rgba(13, 13, 13, 0.88); }
+
+  .modal-box {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3.5rem 2rem 3rem;
+    max-width: 400px;
+    width: 90%;
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: var(--muted, rgba(240,236,228,0.45));
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .close-btn:hover {
+    color: var(--text, #f0ece4);
+    background: var(--border, rgba(255,255,255,0.07));
+  }
+
+  /* SVG ring */
+  .anim-wrap {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin-bottom: 2rem;
+  }
+
+  .ring-svg {
+    width: 100px;
+    height: 100px;
+  }
+
+  .ring-track {
+    stroke: var(--accent-dim, rgba(212,162,89,0.15));
+  }
+
+  .ring-draw {
+    stroke: var(--accent, #d4a259);
+    stroke-dasharray: 339.3;
+    stroke-dashoffset: 339.3;
+  }
+
+  .modal.open .ring-draw {
+    animation: draw-ring 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.05s forwards;
+  }
+
+  @keyframes draw-ring {
+    to { stroke-dashoffset: 0; }
+  }
+
+  .check-draw {
+    stroke: var(--accent, #d4a259);
+    stroke-dasharray: 62;
+    stroke-dashoffset: 62;
+    fill: none;
+  }
+
+  .modal.open .check-draw {
+    animation: draw-check 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.75s forwards;
+  }
+
+  @keyframes draw-check {
+    to { stroke-dashoffset: 0; }
+  }
+
+  /* Subtle glow behind the ring */
+  .glow {
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent-dim, rgba(212,162,89,0.12)) 0%, transparent 70%);
+    opacity: 0;
+  }
+
+  .modal.open .glow {
+    animation: glow-in 0.6s ease 0.85s forwards;
+  }
+
+  @keyframes glow-in {
+    to { opacity: 1; }
+  }
+
+  /* Text */
+  .modal-title {
+    font-size: clamp(1.6rem, 5vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--text, #f0ece4);
+    margin: 0 0 0.75rem;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .modal.open .modal-title {
+    animation: fade-up 0.5s ease 1s forwards;
+  }
+
+  .modal-body {
+    font-size: 1rem;
+    color: var(--muted, rgba(240,236,228,0.55));
+    line-height: 1.65;
+    margin: 0 0 1rem;
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .modal.open .modal-body {
+    animation: fade-up 0.5s ease 1.15s forwards;
+  }
+
+  .modal-tagline {
+    font-size: 0.8rem;
+    color: var(--accent, #d4a259);
+    letter-spacing: 0.04em;
+    opacity: 0;
+    transform: translateY(6px);
+    margin: 0;
+  }
+
+  .modal.open .modal-tagline {
+    animation: fade-up 0.5s ease 1.3s forwards;
+  }
+
+  @keyframes fade-up {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ring-draw, .check-draw, .glow,
+    .modal-title, .modal-body, .modal-tagline {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      stroke-dashoffset: 0 !important;
+    }
+  }
+</style>

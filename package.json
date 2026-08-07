@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/vercel": "^9.0.5",
     "@vercel/analytics": "^2.0.1",
-    "astro": "^5.18.2"
+    "astro": "^5.18.2",
+    "resend": "^6.18.1"
   },
   "devDependencies": {
     "typescript": "^5.6.0"
