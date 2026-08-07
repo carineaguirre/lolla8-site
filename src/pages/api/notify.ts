@@ -58,12 +58,8 @@ export const POST: APIRoute = async ({ request }) => {
   const resend = new Resend(key)
 
   try {
+    // Emails are the critical path — run them first
     await Promise.all([
-      resend.contacts.create({
-        audienceId: audienceId ?? '',
-        email,
-        unsubscribed: false,
-      }),
       resend.emails.send({
         from: 'lolla8 <hello@lolla8.com>',
         to: email,
@@ -77,15 +73,20 @@ export const POST: APIRoute = async ({ request }) => {
         html: `<p style="font-family:sans-serif;">Novo e-mail cadastrado na lista de espera:<br><strong>${escapeHtml(email)}</strong></p>`,
       }),
     ])
-
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
   } catch {
     return new Response(JSON.stringify({ error: 'Erro ao enviar. Tente novamente.' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
   }
+
+  // Audience is best-effort — failure doesn't affect the user response
+  if (audienceId) {
+    resend.contacts.create({ audienceId, email, unsubscribed: false }).catch(() => {})
+  }
+
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
